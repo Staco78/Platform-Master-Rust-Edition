@@ -1,7 +1,7 @@
 use ggez::graphics::*;
 use ggez::{Context, GameResult};
 
-use crate::config::BLOCK_SIZE;
+use crate::config::{BLOCK_SIZE, CHUNK_SIZE};
 use crate::resource_manager::ResourceManager;
 use crate::utils::Vec2i;
 
@@ -29,7 +29,7 @@ impl Block {
             DrawParam::default()
                 .dest(ggez::mint::Point2::from([
                     (pos.x * BLOCK_SIZE as i32) as f32,
-                    (pos.y * BLOCK_SIZE as i32) as f32,
+                    ((CHUNK_SIZE as i32 - pos.y - 1) * BLOCK_SIZE as i32) as f32,
                 ]))
                 .scale(mint::Vector2 { x: scale, y: scale }),
         )?;

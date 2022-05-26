@@ -1,7 +1,7 @@
 use ggez::conf::NumSamples;
 use ggez::graphics::{
     draw, drawable_size, get_window_color_format, set_canvas, set_screen_coordinates, Canvas,
-    DrawParam,
+    Color, DrawMode, DrawParam, Mesh, Rect,
 };
 use ggez::{Context, GameResult};
 use glam::*;
@@ -9,12 +9,13 @@ use std::vec::Vec;
 
 use crate::block::Block;
 use crate::config::{BLOCK_SIZE, CHUNK_SIZE};
+use crate::generation::WorldGenerator;
 use crate::resource_manager::ResourceManager;
 use crate::utils::Vec2i;
 use crate::GameState;
 
 pub struct Chunk {
-    pos: Vec2i,
+    pub pos: Vec2i,
     blocks: Vec<Block>,
     canvas: Canvas,
 }
@@ -60,6 +61,24 @@ impl Chunk {
             )?;
         }
 
+        #[cfg(debug_assertions)]
+        {
+            if crate::config::feature_enabled(crate::config::DebugMode::ChunkBorder) {
+                let rect = Mesh::new_rectangle(
+                    ctx,
+                    DrawMode::stroke(1.),
+                    Rect::new(
+                        0.,
+                        0.,
+                        (CHUNK_SIZE * BLOCK_SIZE) as f32,
+                        (CHUNK_SIZE * BLOCK_SIZE) as f32,
+                    ),
+                    Color::RED,
+                )?;
+                draw(ctx, &rect, DrawParam::default())?;
+            }
+        }
+
         set_canvas(ctx, None);
         let screen_size = drawable_size(ctx);
         set_screen_coordinates(ctx, [0., 0., screen_size.0, screen_size.1].into())?;
@@ -70,9 +89,11 @@ impl Chunk {
         &mut self,
         ctx: &mut Context,
         resource_manager: &ResourceManager,
+        generator: &mut WorldGenerator,
     ) -> GameResult<()> {
         self.blocks
-            .resize((CHUNK_SIZE * CHUNK_SIZE) as usize, Block::new(1));
+            .resize((CHUNK_SIZE * CHUNK_SIZE) as usize, Block::new(0));
+        generator.generate(self);
         self.mesh(ctx, resource_manager)
     }
 
@@ -85,8 +106,17 @@ impl Chunk {
         draw(
             ctx,
             &self.canvas,
-            DrawParam::default().dest(ggez::mint::Point2::from([pos.x(), pos.y()])),
+            DrawParam::default()
+                .dest(ggez::mint::Point2::from([pos.x(), pos.y()]))
+                .offset(ggez::mint::Vector2 {
+                    x: 0.,
+                    y: BLOCK_SIZE as f32 * CHUNK_SIZE as f32,
+                }),
         )?;
         Ok(())
+    }
+
+    pub fn set_block(&mut self, x: u32, y: u32, id: u32) {
+        self.blocks[(x + y * CHUNK_SIZE) as usize] = Block::new(id);
     }
 }

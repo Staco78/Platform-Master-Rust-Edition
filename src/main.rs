@@ -1,6 +1,7 @@
 mod block;
 mod chunk;
 mod config;
+mod generation;
 mod inputs;
 mod player;
 mod resource_manager;
@@ -58,6 +59,11 @@ impl EventHandler for GameState {
             ctx,
             &Text::new(timer::fps(ctx).to_string()),
             DrawParam::default(),
+        )?;
+        draw(
+            ctx,
+            &Text::new(format!("{}", self.player.pos)),
+            DrawParam::default().dest(mint::Vector2 { x: 0., y: 15. }),
         )?;
         present(ctx)?;
         Ok(())

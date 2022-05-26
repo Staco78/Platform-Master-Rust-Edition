@@ -42,9 +42,9 @@ impl Player {
         } else if up && down {
             self.speed.set_y(0.0f32);
         } else if up {
-            self.speed.set_y(-PLAYER_SPEED);
-        } else if down {
             self.speed.set_y(PLAYER_SPEED);
+        } else if down {
+            self.speed.set_y(-PLAYER_SPEED);
         }
 
         self.pos += self.speed * dt;
@@ -72,7 +72,7 @@ impl Player {
         let relative_pos: Vec2 = world_pos - self.pos;
         Vec2::new(
             (relative_pos.x() * BLOCK_SIZE as f32) + self.screen_size.x() / 2.0,
-            (relative_pos.y() * BLOCK_SIZE as f32) + self.screen_size.y() / 2.0,
+            -(relative_pos.y() * BLOCK_SIZE as f32) + self.screen_size.y() / 2.0,
         )
     }
 }

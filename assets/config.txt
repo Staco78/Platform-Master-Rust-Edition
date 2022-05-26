@@ -1,2 +1,2 @@
-sand=0
+air=0
 dirt=1

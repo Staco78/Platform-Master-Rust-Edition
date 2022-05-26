@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use crate::{
     chunk::Chunk,
     config::{CHUNK_SIZE, RENDER_DISTANCE},
+    generation::WorldGenerator,
     player::Player,
     resource_manager::ResourceManager,
     utils::Vec2i,
@@ -12,12 +13,14 @@ use crate::{
 
 pub struct World {
     chunks: HashMap<(i32, i32), Chunk>,
+    generator: WorldGenerator,
 }
 
 impl World {
     pub fn new() -> World {
         World {
             chunks: HashMap::with_capacity(50),
+            generator: WorldGenerator::new(1),
         }
     }
 
@@ -36,10 +39,11 @@ impl World {
                 if !self.chunks.contains_key(&(x, y)) {
                     self.chunks
                         .insert((x, y), Chunk::new(ctx, Vec2i::new(x, y)));
-                    self.chunks
-                        .get_mut(&(x, y))
-                        .unwrap()
-                        .generate(ctx, resource_manager)?;
+                    self.chunks.get_mut(&(x, y)).unwrap().generate(
+                        ctx,
+                        resource_manager,
+                        &mut self.generator,
+                    )?;
                 }
                 self.chunks.get_mut(&(x, y)).unwrap().update();
             }
