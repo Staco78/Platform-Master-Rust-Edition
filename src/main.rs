@@ -30,12 +30,12 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn new(screen_size: Vec2) -> GameState {
+    pub fn new(ctx: &mut Context, screen_size: Vec2) -> GameState {
         GameState {
             inputs: Inputs::new(),
             player: Player::new(screen_size),
             world: World::new(),
-            resource_manager: ResourceManager::new(),
+            resource_manager: ResourceManager::new(ctx),
         }
     }
 }
@@ -92,13 +92,15 @@ fn main() {
 
     if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
         let mut path = path::PathBuf::from(manifest_dir);
-        path.push("assets");
+        path.push("resources");
         println!("Adding path {}", path.display());
         cb = cb.resources_dir_name(path.to_str().unwrap());
     }
 
     let (mut ctx, event_loop) = cb.build().unwrap();
-    let mut state = GameState::new(Vec2::from(ggez::graphics::drawable_size(&ctx)));
+    graphics::set_default_filter(&mut ctx, graphics::FilterMode::Nearest);
+    let screen_size = Vec2::from(ggez::graphics::drawable_size(&ctx));
+    let mut state = GameState::new(&mut ctx, screen_size);
     state.resource_manager.load(&mut ctx).unwrap();
     event::run(ctx, event_loop, state);
 }

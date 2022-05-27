@@ -1,4 +1,5 @@
 use ggez::conf::NumSamples;
+use ggez::graphics::spritebatch::SpriteBatch;
 use ggez::graphics::{
     draw, drawable_size, get_window_color_format, set_canvas, set_screen_coordinates, Canvas,
     Color, DrawMode, DrawParam, Mesh, Rect,
@@ -14,6 +15,7 @@ use crate::resource_manager::ResourceManager;
 use crate::utils::Vec2i;
 use crate::GameState;
 
+#[derive(Debug)]
 pub struct Chunk {
     pub pos: Vec2i,
     blocks: Vec<Block>,
@@ -49,39 +51,39 @@ impl Chunk {
             .into(),
         )?;
 
+        let mut batch = SpriteBatch::new(resource_manager.atlas.clone());
         for (i, block) in self.blocks.iter().enumerate() {
             assert!(i as u32 / CHUNK_SIZE < CHUNK_SIZE);
             block.draw(
-                ctx,
                 Vec2i::new(
                     (i as u32 % CHUNK_SIZE) as i32,
                     (i as u32 / CHUNK_SIZE) as i32,
                 ),
                 resource_manager,
+                &mut batch,
             )?;
         }
+        draw(ctx, &batch, DrawParam::default())?;
 
-        #[cfg(debug_assertions)]
-        {
-            if crate::config::feature_enabled(crate::config::DebugMode::ChunkBorder) {
-                let rect = Mesh::new_rectangle(
-                    ctx,
-                    DrawMode::stroke(1.),
-                    Rect::new(
-                        0.,
-                        0.,
-                        (CHUNK_SIZE * BLOCK_SIZE) as f32,
-                        (CHUNK_SIZE * BLOCK_SIZE) as f32,
-                    ),
-                    Color::RED,
-                )?;
-                draw(ctx, &rect, DrawParam::default())?;
-            }
+        if crate::config::debug_feature_enabled(crate::config::DebugMode::ChunkBorder) {
+            let rect = Mesh::new_rectangle(
+                ctx,
+                DrawMode::stroke(1.),
+                Rect::new(
+                    0.,
+                    0.,
+                    (CHUNK_SIZE * BLOCK_SIZE) as f32,
+                    (CHUNK_SIZE * BLOCK_SIZE) as f32,
+                ),
+                Color::RED,
+            )?;
+            draw(ctx, &rect, DrawParam::default())?;
         }
 
         set_canvas(ctx, None);
         let screen_size = drawable_size(ctx);
         set_screen_coordinates(ctx, [0., 0., screen_size.0, screen_size.1].into())?;
+
         Ok(())
     }
 

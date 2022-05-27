@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use simdnoise::NoiseBuilder;
+
 use crate::{
     chunk::Chunk,
     config::{CHUNK_SIZE, RENDER_DISTANCE},
@@ -20,12 +22,12 @@ impl HeightMap {
 }
 
 pub struct WorldGenerator {
-    seed: u64,
+    seed: i32,
     height_maps: HashMap<i32, HeightMap>,
 }
 
 impl WorldGenerator {
-    pub fn new(seed: u64) -> WorldGenerator {
+    pub fn new(seed: i32) -> WorldGenerator {
         WorldGenerator {
             seed,
             height_maps: HashMap::new(),
@@ -53,10 +55,19 @@ impl WorldGenerator {
 
     fn create_height_map(&mut self, chunk_pos: i32) -> &HeightMap {
         let mut height_map = HeightMap::new();
+        let (data, _min, _max) = NoiseBuilder::ridge_1d_offset(
+            chunk_pos as f32 * CHUNK_SIZE as f32,
+            CHUNK_SIZE as usize,
+        )
+        .with_seed(self.seed)
+        .with_octaves(4)
+        .generate();
+        assert!(data.len() == CHUNK_SIZE as usize);
         for i in 0..CHUNK_SIZE {
-            *height_map.data.get_mut(i as usize).unwrap() = 50;
+            *height_map.data.get_mut(i as usize).unwrap() =
+                (((data[i as usize] + 3.) / 7.) * 100.) as u32; // noise range [-3; 4] -> [0; 7]
         }
-        height_map.max_height = 50;
+        height_map.max_height = 100;
         self.height_maps.insert(chunk_pos, height_map);
         self.height_maps.get(&chunk_pos).unwrap()
     }
@@ -67,6 +78,9 @@ impl WorldGenerator {
             for i in 0..CHUNK_SIZE {
                 let mut height =
                     *map.data.get(i as usize).unwrap() as i32 - (chunk.pos.y * CHUNK_SIZE as i32);
+                if height < 0 {
+                    continue;
+                }
                 if height > CHUNK_SIZE as i32 {
                     height = CHUNK_SIZE as i32;
                 }

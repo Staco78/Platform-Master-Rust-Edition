@@ -1,53 +1,47 @@
-use std::collections::HashMap;
+use ggez::graphics::{Image, Rect};
+use ggez::{filesystem, Context, GameResult};
+
 use std::io::Read;
 use std::path::Path;
+use std::vec::Vec;
 
-use ggez::filesystem;
-use ggez::graphics::Image;
-use ggez::{Context, GameResult};
-
-use crate::config::CONFIG_PATH;
+use crate::config::{ATLAS_CONFIG_PATH, ATLAS_PATH};
 
 pub struct ResourceManager {
-    textures: HashMap<u32, Image>,
+    pub atlas: Image,
+    textures: Vec<Rect>,
 }
 
 impl ResourceManager {
-    pub fn new() -> ResourceManager {
+    pub fn new(ctx: &mut Context) -> ResourceManager {
         ResourceManager {
-            textures: HashMap::new(),
+            atlas: Image::new(ctx, Path::new(ATLAS_PATH)).expect("atlas.png not found"),
+            textures: Vec::new(),
         }
     }
 
     pub fn load(&mut self, ctx: &mut Context) -> GameResult<()> {
-        assert!(
-            filesystem::exists(ctx, Path::new(CONFIG_PATH)),
-            "Config file not found"
-        );
-        let mut config_file = filesystem::open(ctx, CONFIG_PATH)?;
-        let mut config = String::new();
-        config_file.read_to_string(&mut config)?;
-        let mut lines = config.lines();
-        while let Some(line) = lines.next() {
-            let (name, id) = line.rsplit_once("=").expect("Invalid config file");
-            let mut name = String::from(name);
-            if !name.ends_with(".png") {
-                name.push_str(".png");
-            }
-            if !name.starts_with("/") {
-                name.insert_str(0, "/textures/");
-            }
-            let id = id.parse::<u32>().expect("Invalid config file");
-            let img = Image::new(ctx, Path::new(name.as_str())).expect("Invalid config file");
-            let r = self.textures.insert(id, img);
-            assert!(r.is_none(), "Duplicate texture id");
-            println!("Loaded texture: {name} with id {id}");
+        let mut file = filesystem::open(ctx, Path::new(ATLAS_CONFIG_PATH))?;
+        let mut config = Vec::new();
+        file.read_to_end(&mut config)?;
+        let img_count = config.len() / 16;
+        assert!(config.len() % 16 == 0);
+        for i in 0..img_count {
+            let x = u32::from_le_bytes(config[i * 16..i * 16 + 4].try_into().unwrap());
+            let y = u32::from_le_bytes(config[i * 16 + 4..i * 16 + 8].try_into().unwrap());
+            let w = u32::from_le_bytes(config[i * 16 + 8..i * 16 + 12].try_into().unwrap());
+            let h = u32::from_le_bytes(config[i * 16 + 12..i * 16 + 16].try_into().unwrap());
+
+            println!("load texture {i} at pos ({x}, {y})");
+
+            self.textures
+                .push(Rect::new_i32(x as i32, y as i32, w as i32, h as i32));
         }
-        println!("Loaded {} textures", self.textures.len());
         Ok(())
     }
 
-    pub fn get(&self, id: u32) -> Option<&Image> {
-        self.textures.get(&id)
+    pub fn get(&self, id: u32) -> Option<&Rect> {
+        self.textures.get(id as usize)
     }
+
 }
