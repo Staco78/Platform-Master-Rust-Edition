@@ -87,8 +87,8 @@ impl EventHandler for GameState {
 fn main() {
     let mut cb = ggez::ContextBuilder::new("Platform Master Rust Edition", "Staco")
         .window_setup(conf::WindowSetup::default().title("Platform Master Rust Edition"))
-        .resources_dir_name(Path::new("assets").to_str().unwrap())
-        .resources_zip_name(Path::new("assets.zip").to_str().unwrap());
+        .resources_dir_name(Path::new("resources").to_str().unwrap())
+        .resources_zip_name(Path::new("resources.zip").to_str().unwrap());
 
     if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
         let mut path = path::PathBuf::from(manifest_dir);

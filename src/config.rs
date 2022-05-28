@@ -9,8 +9,12 @@ pub enum DebugMode {
     ChunkBorder,
 }
 
-pub fn debug_feature_enabled(mode: DebugMode) -> bool {
-    match mode {
+pub fn debug_feature_enabled(_mode: DebugMode) -> bool {
+    #[cfg(not(debug_assertions))]
+    return false;
+
+    #[cfg(debug_assertions)]
+    match _mode {
         DebugMode::ChunkBorder => true,
         #[allow(unreachable_patterns)]
         _ => false,

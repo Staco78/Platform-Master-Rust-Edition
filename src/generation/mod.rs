@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use simdnoise::NoiseBuilder;
 
 use crate::{
+    block::Block,
     chunk::Chunk,
     config::{CHUNK_SIZE, RENDER_DISTANCE},
 };
@@ -53,7 +54,7 @@ impl WorldGenerator {
         self.height_maps.get(&chunk_pos).unwrap()
     }
 
-    fn create_height_map(&mut self, chunk_pos: i32) -> &HeightMap {
+    fn create_height_map(&mut self, chunk_pos: i32) {
         let mut height_map = HeightMap::new();
         let (data, _min, _max) = NoiseBuilder::ridge_1d_offset(
             chunk_pos as f32 * CHUNK_SIZE as f32,
@@ -69,7 +70,6 @@ impl WorldGenerator {
         }
         height_map.max_height = 100;
         self.height_maps.insert(chunk_pos, height_map);
-        self.height_maps.get(&chunk_pos).unwrap()
     }
 
     pub fn generate(&mut self, chunk: &mut Chunk) {
@@ -78,19 +78,19 @@ impl WorldGenerator {
             for i in 0..CHUNK_SIZE {
                 let mut height =
                     *map.data.get(i as usize).unwrap() as i32 - (chunk.pos.y * CHUNK_SIZE as i32);
-                if height < 0 {
-                    continue;
-                }
-                if height > CHUNK_SIZE as i32 {
-                    height = CHUNK_SIZE as i32;
-                }
+                height = height.clamp(0, CHUNK_SIZE as i32);
                 assert!(height >= 0);
                 assert!(height <= CHUNK_SIZE as i32);
                 let height = height as u32;
-                for j in 0..height {
-                    chunk.set_block(i, j, 1);
+                for j in 0..CHUNK_SIZE {
+                    chunk.blocks.push(Block::new((j < height) as u32));
                 }
             }
+        } else {
+            chunk
+                .blocks
+                .resize((CHUNK_SIZE * CHUNK_SIZE).try_into().unwrap(), Block::new(0));
         }
+        assert!(chunk.blocks.len() == CHUNK_SIZE as usize * CHUNK_SIZE as usize);
     }
 }

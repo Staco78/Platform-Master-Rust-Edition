@@ -18,7 +18,7 @@ use crate::GameState;
 #[derive(Debug)]
 pub struct Chunk {
     pub pos: Vec2i,
-    blocks: Vec<Block>,
+    pub blocks: Vec<Block>,
     canvas: Canvas,
 }
 
@@ -26,7 +26,7 @@ impl Chunk {
     pub fn new(ctx: &mut Context, pos: Vec2i) -> Chunk {
         Chunk {
             pos,
-            blocks: Vec::with_capacity((CHUNK_SIZE * CHUNK_SIZE) as usize),
+            blocks: Vec::with_capacity((CHUNK_SIZE * CHUNK_SIZE).try_into().unwrap()),
             canvas: Canvas::new(
                 ctx,
                 (CHUNK_SIZE * BLOCK_SIZE).try_into().unwrap(),
@@ -56,8 +56,8 @@ impl Chunk {
             assert!(i as u32 / CHUNK_SIZE < CHUNK_SIZE);
             block.draw(
                 Vec2i::new(
-                    (i as u32 % CHUNK_SIZE) as i32,
                     (i as u32 / CHUNK_SIZE) as i32,
+                    (i as u32 % CHUNK_SIZE) as i32,
                 ),
                 resource_manager,
                 &mut batch,
@@ -93,8 +93,6 @@ impl Chunk {
         resource_manager: &ResourceManager,
         generator: &mut WorldGenerator,
     ) -> GameResult<()> {
-        self.blocks
-            .resize((CHUNK_SIZE * CHUNK_SIZE) as usize, Block::new(0));
         generator.generate(self);
         self.mesh(ctx, resource_manager)
     }
@@ -118,7 +116,8 @@ impl Chunk {
         Ok(())
     }
 
+    #[allow(unused)]
     pub fn set_block(&mut self, x: u32, y: u32, id: u32) {
-        self.blocks[(x + y * CHUNK_SIZE) as usize] = Block::new(id);
+        self.blocks[(x * CHUNK_SIZE + y) as usize] = Block::new(id);
     }
 }

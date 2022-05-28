@@ -34,9 +34,10 @@ impl World {
             (player.pos.x() / CHUNK_SIZE as f32) as i32,
             (player.pos.y() / CHUNK_SIZE as f32) as i32,
         );
+        let mut max_created_chunks = 1;
         for x in (chunk_pos.x - RENDER_DISTANCE)..=(chunk_pos.x + RENDER_DISTANCE) {
             for y in (chunk_pos.y - RENDER_DISTANCE)..=(chunk_pos.y + RENDER_DISTANCE) {
-                if !self.chunks.contains_key(&(x, y)) {
+                if !self.chunks.contains_key(&(x, y)) && max_created_chunks > 0 {
                     self.chunks
                         .insert((x, y), Chunk::new(ctx, Vec2i::new(x, y)));
                     self.chunks.get_mut(&(x, y)).unwrap().generate(
@@ -44,10 +45,14 @@ impl World {
                         resource_manager,
                         &mut self.generator,
                     )?;
+                    max_created_chunks -= 1;
                 }
-                self.chunks.get_mut(&(x, y)).unwrap().update();
+                if let Some(chunk) = self.chunks.get_mut(&(x, y)) {
+                    chunk.update();
+                }
             }
         }
+
         // TODO destroy chunks that are out of range
 
         Ok(())
