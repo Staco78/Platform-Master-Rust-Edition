@@ -1,5 +1,5 @@
 [package]
-name = "rusted_platform"
+name = "platform_master_rust_edition"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,4 +8,5 @@ edition = "2021"
 [dependencies]
 ggez="0.7"
 glam = "0.8.5"
-simdnoise = "3.1.6"
+rand = "0.8.5"
+rand_chacha = "0.3.1"

@@ -11,6 +11,7 @@ mod world;
 use std::path::Path;
 use std::{env, path};
 
+use ggez::conf::WindowMode;
 use glam::Vec2;
 use inputs::Inputs;
 use player::Player;
@@ -87,6 +88,7 @@ impl EventHandler for GameState {
 fn main() {
     let mut cb = ggez::ContextBuilder::new("Platform Master Rust Edition", "Staco")
         .window_setup(conf::WindowSetup::default().title("Platform Master Rust Edition"))
+        .window_mode(WindowMode::default().dimensions(1080., 720.))
         .resources_dir_name(Path::new("resources").to_str().unwrap())
         .resources_zip_name(Path::new("resources.zip").to_str().unwrap());
 

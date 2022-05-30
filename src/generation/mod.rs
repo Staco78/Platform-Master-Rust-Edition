@@ -1,12 +1,14 @@
-use std::collections::HashMap;
+mod noise;
 
-use simdnoise::NoiseBuilder;
+use std::collections::HashMap;
 
 use crate::{
     block::Block,
     chunk::Chunk,
     config::{CHUNK_SIZE, RENDER_DISTANCE},
 };
+
+use self::noise::NoiseContext;
 
 pub struct HeightMap {
     pub data: Vec<u32>,
@@ -23,15 +25,15 @@ impl HeightMap {
 }
 
 pub struct WorldGenerator {
-    seed: i32,
     height_maps: HashMap<i32, HeightMap>,
+    noise_ctx: NoiseContext,
 }
 
 impl WorldGenerator {
-    pub fn new(seed: i32) -> WorldGenerator {
+    pub fn new(seed: u64) -> WorldGenerator {
         WorldGenerator {
-            seed,
             height_maps: HashMap::new(),
+            noise_ctx: NoiseContext::new(seed),
         }
     }
 
@@ -56,19 +58,11 @@ impl WorldGenerator {
 
     fn create_height_map(&mut self, chunk_pos: i32) {
         let mut height_map = HeightMap::new();
-        let (data, _min, _max) = NoiseBuilder::ridge_1d_offset(
-            chunk_pos as f32 * CHUNK_SIZE as f32,
-            CHUNK_SIZE as usize,
-        )
-        .with_seed(self.seed)
-        .with_octaves(4)
-        .generate();
-        assert!(data.len() == CHUNK_SIZE as usize);
-        for i in 0..CHUNK_SIZE {
-            *height_map.data.get_mut(i as usize).unwrap() =
-                (((data[i as usize] + 3.) / 7.) * 100.) as u32; // noise range [-3; 4] -> [0; 7]
-        }
-        height_map.max_height = 100;
+
+        let (data, max_height) = self.noise_ctx.noise(chunk_pos);
+        height_map.data = data;
+        height_map.max_height = max_height;
+
         self.height_maps.insert(chunk_pos, height_map);
     }
 
