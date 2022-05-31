@@ -35,6 +35,19 @@ impl World {
             (player.pos.x() / CHUNK_SIZE as f32) as i32,
             (player.pos.y() / CHUNK_SIZE as f32) as i32,
         );
+
+        let mut chunks_to_destroy = vec![];
+        for pos in self.chunks.keys() {
+            if (pos.0 - chunk_pos.x).abs() > RENDER_DISTANCE + 3
+                || (pos.1 - chunk_pos.y).abs() > RENDER_DISTANCE + 3
+            {
+                chunks_to_destroy.push(*pos);
+            }
+        }
+        for pos in chunks_to_destroy {
+            self.chunks.remove(&pos);
+        }
+
         for x in (chunk_pos.x - RENDER_DISTANCE)..=(chunk_pos.x + RENDER_DISTANCE) {
             for y in (chunk_pos.y - RENDER_DISTANCE)..=(chunk_pos.y + RENDER_DISTANCE) {
                 if !self.chunks.contains_key(&(x, y)) {
@@ -51,8 +64,6 @@ impl World {
                 }
             }
         }
-
-        // TODO destroy chunks that are out of range
 
         Ok(())
     }
