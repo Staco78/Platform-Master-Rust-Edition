@@ -14,12 +14,12 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(screen_size: Vec2) -> Player {
+    pub fn new() -> Player {
         Player {
             pos: Vec2::new(0.0, 0.0),
             size: Vec2::new(BLOCK_SIZE as f32, BLOCK_SIZE as f32),
             speed: Vec2::zero(),
-            screen_size,
+            screen_size: Vec2::zero(),
         }
     }
 
@@ -66,6 +66,10 @@ impl Player {
         .unwrap();
         draw(ctx, &rect, DrawParam::default())?;
         Ok(())
+    }
+
+    pub fn set_screen_size(&mut self, size: Vec2) {
+        self.screen_size = size;
     }
 
     pub fn world_to_screen_pos(&self, world_pos: Vec2) -> Vec2 {

@@ -12,7 +12,6 @@ use std::path::Path;
 use std::{env, path};
 
 use ggez::conf::WindowMode;
-use glam::Vec2;
 use inputs::Inputs;
 use player::Player;
 use resource_manager::ResourceManager;
@@ -31,10 +30,10 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn new(ctx: &mut Context, screen_size: Vec2) -> GameState {
+    pub fn new(ctx: &mut Context) -> GameState {
         GameState {
             inputs: Inputs::new(),
-            player: Player::new(screen_size),
+            player: Player::new(),
             world: World::new(),
             resource_manager: ResourceManager::new(ctx),
         }
@@ -83,12 +82,30 @@ impl EventHandler for GameState {
     fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods) {
         self.inputs.key_up(keycode);
     }
+
+    fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
+        set_screen_coordinates(
+            ctx,
+            Rect {
+                x: 0.,
+                y: 0.,
+                w: width,
+                h: height,
+            },
+        )
+        .unwrap();
+        self.player.set_screen_size((width, height).into());
+    }
 }
 
 fn main() {
     let mut cb = ggez::ContextBuilder::new("Platform Master Rust Edition", "Staco")
         .window_setup(conf::WindowSetup::default().title("Platform Master Rust Edition"))
-        .window_mode(WindowMode::default().dimensions(1080., 720.))
+        .window_mode(
+            WindowMode::default()
+                .dimensions(1080., 720.)
+                .resizable(true),
+        )
         .resources_dir_name(Path::new("resources").to_str().unwrap())
         .resources_zip_name(Path::new("resources.zip").to_str().unwrap());
 
@@ -101,8 +118,7 @@ fn main() {
 
     let (mut ctx, event_loop) = cb.build().unwrap();
     graphics::set_default_filter(&mut ctx, graphics::FilterMode::Nearest);
-    let screen_size = Vec2::from(ggez::graphics::drawable_size(&ctx));
-    let mut state = GameState::new(&mut ctx, screen_size);
+    let mut state = GameState::new(&mut ctx);
     state.resource_manager.load(&mut ctx).unwrap();
     event::run(ctx, event_loop, state);
 }
